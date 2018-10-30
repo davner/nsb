@@ -6,6 +6,6 @@ for file in "$@"
 	do
 	    pp_prepare.py "$file"
 	    pp_register.py "$file"
-	    pp_photometry.py "$file" -aprad 1.2 -snr 10
+	    pp_photometry.py "$file" -aprad 1.4
 	    pp_calibrate.py "$file"
 	done

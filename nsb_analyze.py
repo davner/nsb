@@ -84,7 +84,7 @@ def calculate_nsb(files):
         #print(med_zero)
         #med_zero_error = np.median(zeropoint_error)
 
-        nsb = pp_zeropoint - (2.5*np.log10( ((nomask_median / exposure ) / (platescale ** 2)) ))
+        nsb = pp_zeropoint - (2.5*np.log10( ((bkg) / (platescale ** 2)) ))
 
 
         phot_co = ''
@@ -121,7 +121,7 @@ if __name__ == '__main__':
 
     print('\n##### nsb_analyze\n')
     print('### calculating the nsb measurement')
-    print('msky = Z - 2.5log10(med_sky / exposure / platescale^2)\n')
+    print('msky = Z - 2.5log10(med_sky / platescale^2)\n')
     calculate_nsb(files)
     print('\nresults ----> nsb_data.csv')
     print('\nDone...\n')

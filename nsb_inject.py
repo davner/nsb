@@ -3,13 +3,7 @@ from astropy.io import ascii
 from astropy.io import fits
 from tqdm import tqdm
 import numpy as np
-
-# constants that can be changed
-BOLT_FILE = 'z_nsb_bolt.txt'
-SQM_TEL_FILE = 'z_nsb_sqm_tel.txt'
-SQM_ZENITH_FILE = 'z_nsb_sqm_zenith.txt'
-NSB_FILE = 'nsb_data.csv'
-
+import argparse
 def inject_headers_sqm(file, format):
     """
     Inject headers into the fits files with sqm measurements, telescope and
@@ -44,7 +38,7 @@ def inject_headers_sqm(file, format):
 
             fits_header['{}-COUNT'.format(prefix)] = (row['counts'], 'adu')
             fits_header['{}-NSB'.format(prefix)] = (
-                row['sqm_nsb'], 'nsb mag/arcsec^2'
+                row['nsb'], 'nsb mag/arcsec^2'
             )
 
             fits_file.flush()
@@ -123,18 +117,68 @@ def inject_headers_nsb(file):
 
     print('Done...')
 
+def parse_arguments():
+    """
+    Create a parser to get the file from command line.
+
+    Parameters
+    ----------
+    None
+
+    Return
+    ------
+    args.files : the files in list form
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-n',
+        '--nsb_file',
+        nargs=1,
+        help='nsb data file',
+    )
+    parser.add_argument(
+        '-b',
+        '--boltwood_file',
+        nargs=1,
+        help='boltwood data file'
+    )
+    parser.add_argument(
+        '-t',
+        '--tel_sqm_file',
+        nargs=1,
+        help='telescope sqm data file'
+    )
+    parser.add_argument(
+        '-z',
+        '--zen_sqm_file',
+        nargs=1,
+        help='zenith sqm data file'
+    )
+
+    args = parser.parse_args()
+
+    return (
+        args.nsb_file[0],
+        args.boltwood_file[0],
+        args.tel_sqm_file[0],
+        args.zen_sqm_file[0]
+    )
+
+
 if __name__ == '__main__':
     """
     Start of the program.
     """
     print('\n####### nsb_inject.py')
 
-   #inject_headers_sqm(SQM_TEL_FILE, 'telescope')
+    nsb_file, boltwood_file, tel_sqm_file, zen_sqm_file = parse_arguments()
 
-    #inject_headers_sqm(SQM_ZENITH_FILE, 'zenith')
+    inject_headers_sqm(tel_sqm_file, 'telescope')
 
-    #inject_headers_boltwood(BOLT_FILE)
+    inject_headers_sqm(zen_sqm_file, 'zenith')
 
-    inject_headers_nsb(NSB_FILE)
+    inject_headers_boltwood(boltwood_file)
+
+    inject_headers_nsb(nsb_file)
 
     print('\nFINISHED\n')

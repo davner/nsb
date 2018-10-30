@@ -34,9 +34,9 @@ def _inject_headers(files, crop=False):
             image_header['RDNOISE'] = ('23', 'electrons')
             image_header['TELESCOP'] = 'Pomenis'
             image_header['INSTRUME'] = 'Apogee F9000'
-            image_header['LAT-OBS'] = ('31.9583295', 'degrees')
-            image_header['LON-OBS'] = ('-111.596664', 'degrees')
-            image_header['ALT-OBS'] = ('2096', 'meters')
+            #image_header['LAT-OBS'] = ('31.95333', 'degrees')
+            #image_header['LONG-OBS'] = ('-110.44111', 'degrees')
+            #image_header['ALT-OBS'] = ('2500', 'meters')
             image_header['BUNIT'] = ('ADU')
             image_header['BSCALE'] = 1
             image_header['PHOT-CO'] = 'na'
@@ -145,15 +145,16 @@ def _calculate_moon_distance(datetime, telescope_point, site):
     """
     # create pomenis observer for Lemmon
     # NOTE time is in UT of the observation
-    pomenis_lemmon = ephem.Observer()
-    pomenis_lemmon.lon, pomenis_lemmon.lat = site[1], site[0]
-    pomenis_lemmon.elevation = site[2]
+    pomenis = ephem.Observer()
+    pomenis.lon, pomenis.lat = np.radians(site[1]), np.radians(site[0])
+    pomenis.elevation = site[2]
     datetime = '{} {}'.format(datetime[:10], datetime[12:])
-    pomenis_lemmon.date = datetime
+
+    pomenis.date = datetime
 
     # create moon object and calculate the az and alt for a time at pomenis
     moon = ephem.Moon()
-    moon.compute(pomenis_lemmon)
+    moon.compute(pomenis)
 
     moon_az, moon_alt = moon.az, moon.alt
     moon_point = (moon_az, moon_alt)

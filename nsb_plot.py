@@ -50,8 +50,8 @@ def interpolate_plot(files, min_mag, max_mag, autoscale=False, sqm=False):
         values = np.array(data['nsb'])
 
         if autoscale:
-            min_mag = values.min()
-            max_mag = values.max()
+            min_mag = np.nanmin(values)
+            max_mag = np.nanmax(values)
 
         theta = np.radians(azimuth)
         r = elv

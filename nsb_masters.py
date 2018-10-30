@@ -5,34 +5,26 @@ from astropy.io import fits
 from astropy.io.fits import getheader, getval, getdata
 import numpy as np
 
-def _get_biases(files):
+def _get_biases(files, do_crop=False):
     """
     Grabs the biases by looking at the IMAGETYP header in the fits
     files.
     """
-    bias_data = []
-    bias_files = []
+    biases = []
 
     for filename in files:
         type = getval(filename, 'IMAGETYP')
 
         if type == 'Bias Frame':
-            bias_data.append(getdata(filename))
-            #temp_data = getdata(filename)
-            #print(np.mean(temp_data))
-            #print(np.std(temp_data))
-            #print(np.median(temp_data))
-            bias_files.append(filename)
+            bias_data = getdata(filename)
+            if do_crop:
+                print('cropping')
+                bias_data = bias_data[500:2556,500:2556]
+            biases.append(bias_data)
 
+    return biases
 
-    with open('bias.txt', 'w') as file:
-        for bias in bias_files:
-            line = '{}\n'.format(bias)
-            file.write(line)
-
-    return bias_data
-
-def _get_flats(files):
+def _get_flats(files, do_crop=False):
     """
     Gets the flats and puts them into dictionaries depending on the
     filter type.
@@ -47,7 +39,11 @@ def _get_flats(files):
             if filter_used not in flats:
                 flats[filter_used] = []
 
-            flats[filter_used].append((filename, getdata(filename)))
+            flat_data = getdata(filename)
+            if do_crop:
+                print('cropping')
+                flat_data = flat_data[500:2556,500:2556]
+            flats[filter_used].append((filename, flat_data))
 
     return flats
 
@@ -145,11 +141,19 @@ def _parse_arguments():
         help='do flats only',
         action='store_true'
     )
+    parser.add_argument(
+        '-c',
+        '--crop',
+        help='crop the flats and biases before median',
+        action='store_true'
+    )
+
     args = parser.parse_args()
     files = args.files
     only_flat = args.flat
+    do_crop = args.crop
 
-    return files, only_flat
+    return files, only_flat, do_crop
 
 def main():
     """
@@ -158,14 +162,13 @@ def main():
     print('\n########## nsb_masters.py')
     print('Creates master bias and master flats for each filter')
 
-    files, only_flat = _parse_arguments()
+    files, only_flat, do_crop = _parse_arguments()
     master_bias = None
     if not only_flat:
-        print('doing bias stuff')
-        bias_data = _get_biases(files)
+        bias_data = _get_biases(files, do_crop)
         master_bias = _make_master_bias(bias_data)
 
-    flats = _get_flats(files)
+    flats = _get_flats(files, do_crop)
     _make_master_flat(flats, master_bias, only_flat)
 
     print('\nFINISHED\n')
