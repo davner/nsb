@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from astropy.io import ascii
 from astropy.io import fits
+# import tqdm for fancy progress bars!
 from tqdm import tqdm
 import numpy as np
 import argparse
@@ -22,6 +23,8 @@ def inject_headers_sqm(file, format):
     elif format == 'zenith':
         prefix = 'SZ'
         do_az_elv = False
+
+    # pass the data that will be iterated in the for loop in the tqdm function
     for row in tqdm(data):
         with fits.open(row['filename'], mode='update') as fits_file:
             fits_header = fits_file[0].header
@@ -29,16 +32,16 @@ def inject_headers_sqm(file, format):
             fits_header['{}-OBS'.format(prefix)] = (
                 row['sqm_ut'], 'UTC SQM expsoure'
             )
-            fits_header['{}-TDEL'.format(prefix)] = (
-                row['t_delta'], 'time diff (seconds) fits UTC to SQM UTC'
-            )
+            #fits_header['{}-TDEL'.format(prefix)] = (
+                #row['t_delta'], 'time diff (seconds) fits UTC to SQM UTC'
+            #)
             if do_az_elv:
                 fits_header['{}-AZ'.format(prefix)] = (row['az'], 'degrees')
                 fits_header['{}-ELV'.format(prefix)] = (row['elv'], 'degrees')
 
             fits_header['{}-COUNT'.format(prefix)] = (row['counts'], 'adu')
             fits_header['{}-NSB'.format(prefix)] = (
-                row['nsb'], 'nsb mag/arcsec^2'
+                row['reading'], 'nsb mag/arcsec^2'
             )
 
             fits_file.flush()
@@ -62,9 +65,9 @@ def inject_headers_boltwood(file):
             fits_header['BT-OBS'] = (
                 row['bolt_ut'], 'UTC of boltwood measure'
             )
-            fits_header['BT-TDEL'] = (
-                row['t_del'], 'time diff (seconds) fits UTC to bolt UTC'
-            )
+            #fits_header['BT-TDEL'] = (
+                #row['t_del'], 'time diff (seconds) fits UTC to bolt UTC'
+            #)
             fits_header['BT-SKYT'] = (row['sky_t'], 'sky temp (f)')
             fits_header['BT-AMBT'] = (row['amb_t'], 'ambient temp (f)')
             fits_header['BT-WIND'] = (row['wind'], 'wind (miles)')
@@ -132,37 +135,32 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-n',
-        '--nsb_file',
-        nargs=1,
-        help='nsb data file',
+        '--do_nsb',
+        help='inject pomenis nsb data',
+        action='store_true'
     )
     parser.add_argument(
         '-b',
-        '--boltwood_file',
-        nargs=1,
-        help='boltwood data file'
+        '--do_boltwood',
+        action='store_true',
+        help='inject boltwood data'
     )
     parser.add_argument(
         '-t',
-        '--tel_sqm_file',
-        nargs=1,
-        help='telescope sqm data file'
+        '--do_tel_sqm',
+        action='store_true',
+        help='inject telescope sqm readings'
     )
     parser.add_argument(
         '-z',
-        '--zen_sqm_file',
-        nargs=1,
-        help='zenith sqm data file'
+        '--do_zenith_sqm',
+        action='store_true',
+        help='inject zenith sqm readings'
     )
 
     args = parser.parse_args()
 
-    return (
-        args.nsb_file[0],
-        args.boltwood_file[0],
-        args.tel_sqm_file[0],
-        args.zen_sqm_file[0]
-    )
+    return args
 
 
 if __name__ == '__main__':
@@ -171,14 +169,22 @@ if __name__ == '__main__':
     """
     print('\n####### nsb_inject.py')
 
-    nsb_file, boltwood_file, tel_sqm_file, zen_sqm_file = parse_arguments()
+    args = parse_arguments()
 
-    inject_headers_sqm(tel_sqm_file, 'telescope')
+    if args.do_tel_sqm:
+        tel_sqm_file = 'nsb_sqm_tel.csv'
+        inject_headers_sqm(tel_sqm_file, 'telescope')
 
-    inject_headers_sqm(zen_sqm_file, 'zenith')
+    if args.do_zenith_sqm:
+        zenith_sqm_file = 'nsb_sqm_zenith.csv'
+        inject_headers_sqm(zenith_sqm_file, 'zenith')
 
-    inject_headers_boltwood(boltwood_file)
+    if args.do_boltwood:
+        boltwood_file = 'nsb_bolt.csv'
+        inject_headers_boltwood(boltwood_file)
 
-    inject_headers_nsb(nsb_file)
+    if args.do_nsb:
+        nsb_file = 'nsb_data.csv'
+        inject_headers_nsb(nsb_file)
 
     print('\nFINISHED\n')
