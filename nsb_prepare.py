@@ -104,7 +104,8 @@ def _inject_headers(files, crop=False):
 
             if crop:
                 science_data = image[0].data
-                image[0].data = science_data[500:2556,500:2556]
+                start, stopX, stopY = crop, (science_data.shape[0]-crop), (science_data.shape[1]-crop)
+                image[0].data = science_data[start:stopX,start:stopY]
                 pixels = len(image[0].data[0])
 
             image_header['IFOV'] = int(pixels * platescale)
@@ -172,7 +173,7 @@ def _parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument(dest='files', nargs='+')
     parser.add_argument('-r', '--rename', dest='rename', action='store_true')
-    parser.add_argument('-c', '--crop', dest='crop', action='store_true')
+    parser.add_argument('-c', '--crop', dest='crop', nargs='?', const=0, default=0,type=int, help='How much to crop by from each side.')
     args = parser.parse_args()
 
     return args.files, args.rename, args.crop

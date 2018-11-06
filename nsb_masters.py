@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import sys, os
+import sys, os, pdb
 import argparse
 from astropy.io import fits
 from astropy.io.fits import getheader, getval, getdata
@@ -18,8 +18,9 @@ def _get_biases(files, do_crop=False):
         if type == 'Bias Frame':
             bias_data = getdata(filename)
             if do_crop:
-                print('cropping')
-                bias_data = bias_data[500:2556,500:2556]
+                print('cropping by {} pixels from each side of {}'.format(do_crop, filename))
+                start, stopX, stopY = do_crop, (bias_data.shape[0]-do_crop), (bias_data.shape[1]-do_crop)
+                bias_data = bias_data[start:stopX,start:stopY]
             biases.append(bias_data)
 
     return biases
@@ -41,8 +42,9 @@ def _get_flats(files, do_crop=False):
 
             flat_data = getdata(filename)
             if do_crop:
-                print('cropping')
-                flat_data = flat_data[500:2556,500:2556]
+                print('cropping by {} pixels from each side of {}'.format(do_crop, filename))
+                start, stopX, stopY = do_crop, (flat_data.shape[0]-do_crop), (flat_data.shape[1]-do_crop)
+                flat_data = flat_data[start:stopX,start:stopY]
             flats[filter_used].append((filename, flat_data))
 
     return flats
@@ -74,6 +76,9 @@ def _make_master_bias(bias_data):
     biashead['MEDIAN'] = (median, 'median')
     biashead['STD'] = (std, 'standard dev')
     biashead['VAR'] = (variance, 'variance')
+    biashead['NAXIS'] = 2
+    biashead['NAXIS1'] = master_bias.shape[0]
+    biashead['NAXIS2'] = master_bias.shape[1]
     biasfits = fits.PrimaryHDU(master_bias, header=biashead)
 
     print('Saving master bias ----> masterbias.fits')
@@ -109,6 +114,9 @@ def _make_master_flat(flats, master_bias, only_flat=False):
         master_flat_header = fits.Header()
         master_flat_header['IMAGETYP'] = 'Master Flat'
         master_flat_header['FILTER'] = key
+        master_flat_header['NAXIS'] = 2
+        master_flat_header['NAXIS1'] = master_flat_data.shape[0]
+        master_flat_header['NAXIS2'] = master_flat_data.shape[1]
         new_fits_file = fits.PrimaryHDU(
             master_flat_data,
             header=master_flat_header
@@ -144,8 +152,11 @@ def _parse_arguments():
     parser.add_argument(
         '-c',
         '--crop',
-        help='crop the flats and biases before median',
-        action='store_true'
+        nargs='?',
+        const=0,
+        default=0,
+        type=int,
+        help='How much to crop the flats and biases by before median'
     )
 
     args = parser.parse_args()
