@@ -9,8 +9,28 @@ from astropy.stats import sigma_clipped_stats
 from astropy.coordinates import Angle
 import astropy.units as u
 from tqdm import tqdm
+import pdb
 
-def calculate_nsb(files):
+def output_filename(files):
+
+    with open(files[0], 'r') as f:
+        pp_zeropoint = np.nan
+        for line in f:
+            split_line = line.strip('\n').split('\t')
+            if split_line[0] == '#filename':
+                date_obs = getval(split_line[1], 'DATE-OBS')
+                t_delta = TimeDelta(25200, format='sec')
+                local_date_obs = Time(date_obs) - t_delta
+            elif split_line[0] == '#filter':
+                Filter = split_line[1]
+    mod_date_obs = local_date_obs.value.split('T')[0].replace('-','')
+    fname = mod_date_obs + '_nsb_data_' + Filter + '.csv'
+
+    return fname
+
+
+
+def calculate_nsb(files,ouputName):
     """
     calculate the nsb measurement using the equation below. Need to comment this
     code more haha.
@@ -88,7 +108,8 @@ def calculate_nsb(files):
 
 
         phot_co = ''
-        with open('nsb_data.csv', 'a') as f:
+
+        with open(ouputName, 'a') as f:
             line = '{},{},{},{:.2f},{:.2f},{},{},{},{},{},{:.2f},{:.2f},{:.2f},{:.2f},{:.2f},na\n'.format(
                 filename,
                 date_obs,
@@ -115,13 +136,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(dest='files', nargs='+')
     files = parser.parse_args().files
-    with open('nsb_data.csv', 'w') as f:
+    fname = output_filename(files)
+    with open(fname, 'w') as f:
         header = '#filename,ut,local,az,elv,ra,dec,exp,filt,ifov,mean_bkg,med_bkg,std,zp,nsb,phot_co\n'
         f.write(header)
 
     print('\n##### nsb_analyze\n')
     print('### calculating the nsb measurement')
     print('msky = Z - 2.5log10(med_sky / platescale^2)\n')
-    calculate_nsb(files)
+    calculate_nsb(files, fname)
     print('\nresults ----> nsb_data.csv')
     print('\nDone...\n')

@@ -9,6 +9,7 @@ from scipy.interpolate import griddata, Rbf
 import matplotlib.tri as tri
 from astropy.time import Time
 import matplotlib.dates as mdates
+import pdb
 
 
 # setup plotting
@@ -45,9 +46,11 @@ def interpolate_plot(files, min_mag, max_mag, autoscale=False, sqm=False):
 
         data = ascii.read(file)
 
-        azimuth = np.array(data['az'])
-        elv = np.array(data['elv'])
-        values = np.array(data['nsb'])
+        original_values = np.array(data['nsb']) #nsbvalues from original data table that may contain NaNs
+        non_NaNs = np.isfinite(original_values)
+        values = original_values[non_NaNs]
+        azimuth = np.array(data['az'][non_NaNs])
+        elv = np.array(data['elv'][non_NaNs])
 
         if autoscale:
             min_mag = np.nanmin(values)
@@ -138,9 +141,11 @@ def plot(files, min_mag, max_mag, autoscale=False, sqm=False):
         data = ascii.read(file)
 
         # grab the needed information
-        azimuth = np.array(data['az'])
-        elv = np.array(data['elv'])
-        values = np.array(data['nsb'])
+        original_values = np.array(data['nsb']) #nsbvalues from original data table that may contain NaNs
+        non_NaNs = np.isfinite(original_values)
+        values = original_values[non_NaNs]
+        azimuth = np.array(data['az'][non_NaNs])
+        elv = np.array(data['elv'][non_NaNs])
 
         if autoscale:
             min_mag = values.min()
@@ -156,6 +161,7 @@ def plot(files, min_mag, max_mag, autoscale=False, sqm=False):
         levels, steps = np.linspace(min_mag, max_mag, 35, retstep=True)
         ticks = np.linspace(min_mag, max_mag, 9)
         cax = ax.tricontourf(theta, 90-r, z, levels=levels, cmap=colors)
+        # pdb.set_trace()
 
         cbar = plt.colorbar(cax, fraction=0.046, pad=0.04, ticks=ticks)
         cbar.set_label(r'mag/arcsec$^2$')
@@ -202,7 +208,8 @@ def plot_zenith(files, autoscale=True):
         data = ascii.read(file)
         date_title = data['sqm_ut'][0].split('T')[0]
         date = Time(data['sqm_ut']).plot_date
-        values = data['nsb']
+        original_values = np.array(data['nsb']) #nsbvalues from original data table that may contain NaNs
+        values = original_values[np.isfinite(original_values)]
 
 
         if autoscale:

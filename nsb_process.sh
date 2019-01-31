@@ -1,11 +1,11 @@
-#Just a small shell wrapper to iterate over the fits files. 
+#Just a small shell wrapper to iterate over the fits files.
 #Ex. nsb_process.sh kp*.fits
 
 for file in "$@"
-	
+
 	do
-	    pp_prepare.py "$file"
-	    pp_register.py "$file"
-	    pp_photometry.py "$file" -aprad 1.4
-	    pp_calibrate.py "$file"
+	    ~/Downloads/code_mm/pp_prepare.py "$file"
+	    ~/Downloads/code_mm/pp_register.py "$file"
+	    ~/Downloads/code_mm/pp_photometry.py "$file" -aprad 6.0
+	    ~/Downloads/code_mm/pp_calibrate.py "$file"
 	done

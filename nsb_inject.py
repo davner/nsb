@@ -4,7 +4,9 @@ from astropy.io import fits
 # import tqdm for fancy progress bars!
 from tqdm import tqdm
 import numpy as np
+import pandas as pd
 import argparse
+import pdb
 def inject_headers_sqm(file, format):
     """
     Inject headers into the fits files with sqm measurements, telescope and
@@ -59,6 +61,7 @@ def inject_headers_boltwood(file):
     data = ascii.read(file)
 
     for row in tqdm(data):
+        #pdb.set_trace()
         with fits.open(row['filename'], mode='update') as fits_file:
             fits_header = fits_file[0].header
 
@@ -172,19 +175,19 @@ if __name__ == '__main__':
     args = parse_arguments()
 
     if args.do_tel_sqm:
-        tel_sqm_file = 'nsb_sqm_tel.csv'
+        tel_sqm_file = '*sqm_tel*.csv'
         inject_headers_sqm(tel_sqm_file, 'telescope')
 
     if args.do_zenith_sqm:
-        zenith_sqm_file = 'nsb_sqm_zenith.csv'
+        zenith_sqm_file = '*sqm_zenith*.csv'
         inject_headers_sqm(zenith_sqm_file, 'zenith')
 
     if args.do_boltwood:
-        boltwood_file = 'nsb_bolt.csv'
+        boltwood_file = '*bolt.csv'
         inject_headers_boltwood(boltwood_file)
 
     if args.do_nsb:
-        nsb_file = 'nsb_data.csv'
+        nsb_file = '*nsb_data*.csv'
         inject_headers_nsb(nsb_file)
 
     print('\nFINISHED\n')
